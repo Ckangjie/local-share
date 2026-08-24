@@ -1,0 +1,44 @@
+// LocalShare 样式变量与设计系统
+
+// 主题色彩体系
+$color-bg-primary: #0f172a;        // 主背景（深深蓝灰）
+$color-bg-card: #1e293b;           // 卡片背景
+$color-bg-card-hover: #334155;     // 卡片悬浮背景
+$color-bg-card-active: #1e3a8a;    // 卡片选中背景
+$color-bg-input: #0b1120;          // 输入框背景
+
+// 品牌与状态色彩
+$color-primary: #3b82f6;           // 主色调（明亮蓝）
+$color-primary-hover: #2563eb;     // 主色调悬浮
+$color-primary-active: #1d4ed8;    // 主色调激活
+$color-accent-cf: #f97316;         // Cloudflare 标志橙
+$color-success: #10b981;           // 运行/在线（翠绿）
+$color-warning: #f59e0b;           // 警告（琥珀黄）
+$color-danger: #ef4444;            // 异常/停止（珊瑚红）
+$color-danger-hover: #dc2626;
+
+// 文本色彩
+$color-text-primary: #f8fafc;      // 主文本
+$color-text-secondary: #94a3b8;    // 次级文本
+$color-text-muted: #64748b;        // 弱化文本
+$color-text-link: #60a5fa;         // 链接颜色
+
+// 边框与阴影
+$color-border-subtle: rgba(255, 255, 255, 0.08);
+$color-border-focus: rgba(59, 130, 246, 0.5);
+$color-border-active: rgba(59, 130, 246, 0.8);
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+$shadow-glow-success: 0 0 12px rgba(16, 185, 129, 0.35);
+$shadow-glow-primary: 0 0 12px rgba(59, 130, 246, 0.35);
+
+// 圆角与间距
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+$radius-full: 9999px;
+
+// 动效过渡
+$transition-fast: 0.15s ease;
+$transition-normal: 0.25s ease;

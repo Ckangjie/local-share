@@ -1,0 +1,34 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+dist-electron/
+release/
+*.exe
+LocalShare.exe
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/binaries/
+binaries/
+
+# Environment & Cache
+.env
+.env.local
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE & Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
