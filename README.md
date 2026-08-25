@@ -44,30 +44,54 @@ LocalShare
 
 ## 🚀 快速起步
 
-### 环境要求
-- [Node.js](https://nodejs.org/) (>= 18.0.0)
-- [pnpm](https://pnpm.io/) (推荐)
-- [Rust](https://www.rust-lang.org/) (用于 Tauri 2 编译)
+### 🛠️ 打包与开发环境要求
 
-### 1. 克隆项目与安装依赖
+#### 1. 前端与运行环境
+- **[Node.js](https://nodejs.org/)**：`>= 18.0.0`（推荐 LTS 20+）
+- **包管理器**：**[pnpm](https://pnpm.io/)**（推荐 `>= 8.0`）
+
+#### 2. Rust 编译底座（Tauri 2）
+- **[Rust 工具链](https://www.rust-lang.org/)**：`rustc` / `cargo` (`>= 1.77.0`)
+  ```bash
+  # 安装 Rust (Windows / macOS / Linux)
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+  ```
+
+#### 3. 各操作系统专属依赖
+- **Windows（推荐打包目标）**：
+  - **C++ 编译工具链**：安装 [Visual Studio 2022 生成工具](https://visualstudio.microsoft.com/visual-cpp-build-tools/)，并勾选 **「使用 C++ 的桌面开发」**（包含 MSVC 编译器及 Windows 10/11 SDK）；
+  - **WebView2 运行时**：Windows 10/11 默认自带（若缺失可安装 Evergreen Bootstrapper）。
+- **macOS**：
+  - 安装 Xcode 命令行工具：`xcode-select --install`
+- **Linux (Ubuntu / Debian)**：
+  ```bash
+  sudo apt-get update
+  sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+  ```
+
+---
+
+### 📦 开发与打包步骤
+
+#### 1. 克隆项目与安装依赖
 ```bash
 git clone git@github.com:Ckangjie/local-share.git
 cd local-share
 pnpm install
 ```
 
-### 2. 本地开发调试
+#### 2. 本地开发调试
 ```bash
-# 启动纯前端预览
+# 仅启动前端开发服务器预览
 pnpm dev
 
-# 启动完整 Tauri 桌面端调试环境
+# 启动完整 Tauri 桌面端热重载环境
 pnpm tauri dev
 ```
 
-### 3. 构建发布
+#### 3. 生产构建打包
 ```bash
-# 打包生成极简 Windows 原生可执行文件 (输出至根目录 LocalShare.exe)
+# 一键编译并自动输出至根目录 LocalShare.exe (体积仅 3~5 MB)
 pnpm tauri:build
 ```
 
