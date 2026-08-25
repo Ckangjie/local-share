@@ -4,9 +4,16 @@ const STORAGE_KEY = 'localshare_tunnel_settings'
 
 // 默认配置
 const defaultSettings = {
-  mode: 'custom', // 'quick' (随机临时域名) | 'custom' (固定域名 Token 模式)
-  token: '',
-  customDomain: 'du1.ccwu.cc'
+  mode: 'custom', // 'quick' (随机临时域名) | 'custom' (固定域名多服务模式)
+  token: '', // 兼容历史单 Token
+  customDomain: 'du1.ccwu.cc',
+  customConfig: {
+    tunnelId: '',
+    credentialsJson: '',
+    baseDomain: 'du1.ccwu.cc',
+    subdomainPattern: 'p{port}',
+    token: ''
+  }
 }
 
 function loadStoredSettings() {
@@ -14,10 +21,20 @@ function loadStoredSettings() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return { ...defaultSettings }
     const parsed = JSON.parse(raw)
+    const storedCustomConfig = parsed.customConfig ?? {}
+    const effectiveToken = parsed.token || storedCustomConfig.token || ''
+    const effectiveDomain = storedCustomConfig.baseDomain || parsed.customDomain || 'du1.ccwu.cc'
     return {
       mode: parsed.mode ?? defaultSettings.mode,
-      token: parsed.token ?? defaultSettings.token,
-      customDomain: parsed.customDomain ?? defaultSettings.customDomain
+      token: effectiveToken,
+      customDomain: effectiveDomain,
+      customConfig: {
+        tunnelId: storedCustomConfig.tunnelId ?? '',
+        credentialsJson: storedCustomConfig.credentialsJson ?? '',
+        baseDomain: effectiveDomain,
+        subdomainPattern: storedCustomConfig.subdomainPattern ?? 'p{port}',
+        token: effectiveToken
+      }
     }
   } catch (err) {
     console.warn('读取本地配置失败，恢复默认值:', err)

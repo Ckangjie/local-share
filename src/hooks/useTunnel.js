@@ -105,14 +105,17 @@ export function useTunnel() {
       return
     }
 
-    // 2. 校验配置（固定域名模式需要 Token）
+    // 2. 校验配置
     const isCustomMode = settings.value?.mode === 'custom'
-    const token = isCustomMode ? settings.value?.token?.trim() : ''
-    const customDomain = isCustomMode ? (settings.value?.customDomain?.trim() || 'du1.ccwu.cc') : ''
+    const customConfig = settings.value?.customConfig ?? {}
+    const token = isCustomMode ? (settings.value?.token?.trim() || customConfig.token?.trim() || '') : ''
+    const customDomain = isCustomMode ? (customConfig.baseDomain?.trim() || settings.value?.customDomain?.trim() || 'ccwu.cc') : ''
+    const credentialsJson = isCustomMode ? (customConfig.credentialsJson?.trim() || '') : ''
+    const tunnelId = isCustomMode ? (customConfig.tunnelId?.trim() || '') : ''
 
-    if (isCustomMode && !token) {
+    if (isCustomMode && !credentialsJson && !tunnelId && !token) {
       openSettings()
-      throw new Error('当前为固定域名模式，请先在设置中填入 Cloudflare Tunnel Token')
+      throw new Error('当前为固定域名模式，请先在设置中填入 Tunnel 凭据 (Credentials JSON) 或 Token')
     }
 
     // 3. 初始化/重置该端口状态
@@ -134,7 +137,16 @@ export function useTunnel() {
         generatedUrl = await invoke('start_tunnel', {
           port,
           token: token || null,
-          customDomain: customDomain || null
+          customDomain: customDomain || null,
+          customConfig: isCustomMode
+            ? {
+                tunnel_id: tunnelId || null,
+                credentials_json: credentialsJson || null,
+                base_domain: customDomain || null,
+                subdomain_pattern: customConfig.subdomainPattern || 'p{port}',
+                token: token || null
+              }
+            : null
         })
       } else {
         throw new Error('未检测到桌面端运行环境')

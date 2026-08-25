@@ -16,7 +16,7 @@
               :class="['mode-tab', { 'is-active': localMode === 'custom' }]"
               @click="localMode = 'custom'"
             >
-              固定域名 (Token)
+              固定域名 (多服务映射)
             </button>
             <button
               :class="['mode-tab', { 'is-active': localMode === 'quick' }]"
@@ -30,30 +30,46 @@
         <!-- 固定域名模式配置 -->
         <template v-if="localMode === 'custom'">
           <div class="form-item">
-            <label class="item-label" for="custom-domain-input">固定公网域名</label>
+            <label class="item-label" for="custom-domain-input">主域名 / 根域名</label>
             <input
               id="custom-domain-input"
-              v-model.trim="localCustomDomain"
+              v-model.trim="localBaseDomain"
               class="text-input"
               type="text"
-              placeholder="例如 du1.ccwu.cc"
+              placeholder="例如 ccwu.cc 或 dev.example.com"
               spellcheck="false"
             />
-            <span class="field-hint">分享成功后将通过此域名访问本地服务</span>
+            <span class="field-hint">各服务将自动分配独立二级域名（如 <code>p5173.ccwu.cc</code>）</span>
           </div>
 
           <div class="form-item">
-            <label class="item-label" for="tunnel-token-input">Cloudflare Tunnel Token</label>
+            <label class="item-label" for="tunnel-id-input">Cloudflare Tunnel ID</label>
+            <input
+              id="tunnel-id-input"
+              v-model.trim="localTunnelId"
+              class="text-input"
+              type="text"
+              placeholder="例如 8a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d"
+              spellcheck="false"
+            />
+            <span class="field-hint">通过 <code>cloudflared tunnel create &lt;name&gt;</code> 生成的 UUID</span>
+          </div>
+
+          <div class="form-item">
+            <label class="item-label" for="tunnel-credentials-input">
+              Cloudflare Tunnel Token / 凭据内容 (Credentials JSON)
+            </label>
             <textarea
-              id="tunnel-token-input"
-              v-model.trim="localToken"
+              id="tunnel-credentials-input"
+              v-model="localCredentialsJson"
               class="token-textarea"
               rows="3"
-              placeholder="粘贴 Cloudflare Zero Trust 生成的 Token (以 eyJh... 开头)"
+              placeholder="直接粘贴 Cloudflare Token (以 eyJh 开头) 或 ~/.cloudflared/*.json 凭据"
               spellcheck="false"
+              @input="handleCredentialsInput"
             ></textarea>
             <span class="field-hint">
-              可在 Cloudflare Zero Trust -> Networks -> Tunnels 获取
+              支持直接粘贴 Zero Trust Token 或 JSON 凭据，将自动识别 TunnelID 并生成动态 Ingress 规则
             </span>
           </div>
         </template>
@@ -75,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, watch, defineProps, defineEmits } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   isVisible: {
@@ -87,7 +103,13 @@ const props = defineProps({
     default: () => ({
       mode: 'custom',
       token: '',
-      customDomain: 'du1.ccwu.cc'
+      customDomain: 'ccwu.cc',
+      customConfig: {
+        tunnelId: '',
+        credentialsJson: '',
+        baseDomain: 'ccwu.cc',
+        subdomainPattern: 'p{port}'
+      }
     })
   }
 })
@@ -95,23 +117,60 @@ const props = defineProps({
 const emit = defineEmits(['close', 'save'])
 
 const localMode = ref('custom')
-const localToken = ref('')
-const localCustomDomain = ref('du1.ccwu.cc')
+const localBaseDomain = ref('ccwu.cc')
+const localTunnelId = ref('')
+const localCredentialsJson = ref('')
 
 watch(
   () => props.isVisible,
   (visible) => {
     if (visible) {
       localMode.value = props.settings?.mode ?? 'custom'
-      localToken.value = props.settings?.token ?? ''
-      localCustomDomain.value = props.settings?.customDomain ?? 'du1.ccwu.cc'
+      const cfg = props.settings?.customConfig ?? {}
+      localBaseDomain.value = cfg.baseDomain || props.settings?.customDomain || 'ccwu.cc'
+      localTunnelId.value = cfg.tunnelId || ''
+      localCredentialsJson.value = cfg.credentialsJson || props.settings?.token || ''
     }
   },
   { immediate: true }
 )
 
+const handleCredentialsInput = () => {
+  const content = localCredentialsJson.value.trim()
+  if (!content) return
+
+  // 1. 尝试直接作为 JSON 解析
+  try {
+    const parsed = JSON.parse(content)
+    if (parsed.TunnelID && !localTunnelId.value) {
+      localTunnelId.value = String(parsed.TunnelID).trim()
+    } else if (parsed.t && !localTunnelId.value) {
+      localTunnelId.value = String(parsed.t).trim()
+    }
+    return
+  } catch (err) {}
+
+  // 2. 尝试作为 Cloudflare Base64 Token (以 eyJh 开头) 自动解码
+  try {
+    const decodedStr = atob(content)
+    const parsed = JSON.parse(decodedStr)
+    if (parsed.t) {
+      if (!localTunnelId.value) {
+        localTunnelId.value = String(parsed.t).trim()
+      }
+      // 自动转为标准 Credentials JSON 格式
+      const standardJson = {
+        AccountTag: parsed.a || '',
+        TunnelSecret: parsed.s || '',
+        TunnelID: parsed.t || ''
+      }
+      localCredentialsJson.value = JSON.stringify(standardJson, null, 2)
+    }
+  } catch (err) {}
+}
+
 const handleSave = () => {
-  let cleanDomain = localCustomDomain.value
+  let cleanDomain = localBaseDomain.value
     .replace(/^https?:\/\//i, '')
     .replace(/\/.*$/, '')
     .trim()
@@ -120,10 +179,46 @@ const handleSave = () => {
     cleanDomain = 'du1.ccwu.cc'
   }
 
+  let finalTunnelId = localTunnelId.value.trim()
+  let credsContent = localCredentialsJson.value.trim()
+  let finalToken = props.settings?.token || props.settings?.customConfig?.token || ''
+
+  if (credsContent) {
+    if (credsContent.startsWith('eyJh')) {
+      finalToken = credsContent
+      try {
+        const decoded = JSON.parse(atob(credsContent))
+        if (decoded.t) {
+          finalTunnelId = String(decoded.t).trim()
+        }
+      } catch (e) {}
+    } else {
+      try {
+        const parsed = JSON.parse(credsContent)
+        const a = parsed.AccountTag || parsed.a || ''
+        const t = parsed.TunnelID || parsed.t || finalTunnelId || ''
+        const s = parsed.TunnelSecret || parsed.s || ''
+        if (t) finalTunnelId = t
+        if (a && t && s) {
+          finalToken = btoa(JSON.stringify({ a, t, s }))
+        }
+      } catch (e) {
+        if (!finalToken) finalToken = credsContent
+      }
+    }
+  }
+
   emit('save', {
     mode: localMode.value,
-    token: localToken.value.trim(),
-    customDomain: cleanDomain
+    token: finalToken,
+    customDomain: cleanDomain,
+    customConfig: {
+      tunnelId: finalTunnelId,
+      credentialsJson: credsContent,
+      baseDomain: cleanDomain,
+      subdomainPattern: 'p{port}',
+      token: finalToken
+    }
   })
   emit('close')
 }

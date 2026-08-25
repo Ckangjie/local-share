@@ -11,11 +11,11 @@
         <!-- 模式标签按钮 -->
         <button
           class="mode-badge-btn"
-          :title="settings.mode === 'custom' ? `固定域名模式 (${settings.customDomain || 'du1.ccwu.cc'})` : '随机域名模式'"
+          :title="settings.mode === 'custom' ? `固定域名模式 (${settings.customConfig?.baseDomain || settings.customDomain || 'ccwu.cc'})` : '随机域名模式'"
           @click="openSettings"
         >
           <span class="mode-icon">{{ settings.mode === 'custom' ? '🔒' : '🎲' }}</span>
-          <span class="mode-name">{{ settings.mode === 'custom' ? (settings.customDomain || 'du1.ccwu.cc') : '随机' }}</span>
+          <span class="mode-name">{{ settings.mode === 'custom' ? (settings.customConfig?.baseDomain || settings.customDomain || 'ccwu.cc') : '随机' }}</span>
         </button>
 
         <!-- 设置入口按钮 -->
