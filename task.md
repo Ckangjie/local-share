@@ -62,3 +62,32 @@
 - [x] **Task 5.2: 全量适配与编译测试**
   - 前端适配 Tauri 2 invoke 与多端口事件调用。
   - 成功编译输出仅 **8.5 MB** 的极简 `LocalShare.exe`。
+
+---
+
+## 阶段六：固定域名多端口并发智能分流与 VPN 兼容优化
+
+- [x] **Task 6.1: 本地智能分流网关 (`tunnel.rs`)**
+  - 新增 `ensure_gateway_running()`，在 `127.0.0.1:17890` 启动本地 TCP 代理网关。
+  - 网关根据请求 `Host` / `X-Forwarded-Host` 头中的前缀（`p{port}` 格式）自动提取目标端口，将请求转发至 `127.0.0.1:{port}`。
+  - 支持 WebSocket 透传（`Upgrade: websocket` 自动识别并进行双向 `copy_bidirectional`）。
+  - HTTP 请求自动改写 `Host` 头并追加 `Connection: close`，兼容 VPN 环境。
+- [x] **Task 6.2: 新增 `CustomTunnelConfig` 结构体与多模式凭据解析 (`tunnel.rs`)**
+  - 新增 `CustomTunnelConfig`（`tunnelId`、`credentialsJson`、`baseDomain`、`subdomainPattern`、`token`）。
+  - `start_tunnel` 增加 `custom_config: Option<CustomTunnelConfig>` 参数。
+  - 支持从 `credentialsJson` 自动识别 Base64 Token 或 JSON 凭据，提取有效 Token 和 TunnelID。
+  - 新增 `compute_custom_public_url(port, base_domain, subdomain_pattern)` 计算各端口公网 URL（格式：`https://p{port}.{baseDomain}`）。
+- [x] **Task 6.3: 全局状态扩展 (`state.rs`)**
+  - 新增 `GATEWAY_INITIALIZED`（`AtomicBool`）防止网关重复初始化。
+  - 状态结构适配多端口并发分流网关。
+- [x] **Task 6.4: 设置面板重构 (`SettingsModal.vue`)**
+  - 固定域名模式标签从 "固定域名 (Token)" 改为 "固定域名 (多服务映射)"。
+  - 新增 **主域名** / **Tunnel ID** / **凭据内容（Credentials JSON）** 三个独立输入项。
+  - `handleCredentialsInput` 自动解析粘贴的 Token 或 JSON，自动回填 TunnelID。
+  - `handleSave` 统一处理 Base64 Token 与 JSON 凭据，输出标准 `customConfig` 结构。
+- [x] **Task 6.5: 设置 Hook 扩展 (`useSettings.js`)**
+  - `defaultSettings` 新增 `customConfig` 字段（含 `tunnelId`、`credentialsJson`、`baseDomain`、`subdomainPattern`、`token`）。
+  - `loadStoredSettings` 向下兼容旧格式，自动合并历史 `token` 与 `customDomain`。
+- [x] **Task 6.6: 隧道启动调用更新 (`useTunnel.js`)**
+  - 校验逻辑更新：固定域名模式下，`credentialsJson`、`tunnelId`、`token` 三者有一即可，否则弹出设置弹窗。
+  - `invoke('start_tunnel')` 调用新增 `customConfig` 参数透传。

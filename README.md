@@ -12,7 +12,7 @@
 
 - 🌐 **双穿透模式灵活切换**
   - **🎲 临时随机域名模式（Quick Tunnel）**：免账号、免域名、零配置，点击即可秒级生成 `https://*.trycloudflare.com` 临时访问链接。
-  - **🔒 固定域名 Token 模式（Cloudflare Zero Trust）**：支持填入自定义 Tunnel Token，将本地服务永久稳定映射至您的专属个性化域名（例如 `https://du1.ccwu.cc`）。
+  - **🔒 固定域名多服务映射模式（Cloudflare Zero Trust）**：支持填入 Tunnel Token 或 Credentials JSON 凭据，内置本地智能分流网关（`127.0.0.1:17890`），多个本地服务自动按端口分配独立二级域名（如 `p5173.ccwu.cc`、`p3000.ccwu.cc`），支持多端口并发共享同一个 Tunnel，兼容 VPN 环境。
 
 - 🚀 **多端口并发分享**  
   支持同时对多个本地独立服务开启公网穿透，各隧道互不干扰；提供一键复制、浏览器快捷打开与顶部一键“全部停止”。
@@ -105,11 +105,12 @@ pnpm tauri:build
 3. 保持右上角为“随机”模式，点击目标服务的 **“开启分享”** 按钮。
 4. 复制生成的 `https://*.trycloudflare.com` 链接即可发给同事或在手机端预览。
 
-### 方式二：固定域名分享（品牌专属域名）
-1. 在 [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) 中创建一条 Tunnel 并获取专属 Token。
-2. 在 Cloudflare 路由中添加您的域名映射（如 `du1.ccwu.cc` $\rightarrow$ `http://localhost:5173`）。
-3. 打开 LocalShare 右上角 **⚙️ 设置**，切换为 **固定域名模式**，粘贴 Token 并保存。
-4. 点击开启分享，即可直接通过 `https://du1.ccwu.cc` 稳定访问！
+### 方式二：固定域名分享（多服务并发 + 专属域名）
+1. 在 [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) 中创建一条 Tunnel，下载 `~/.cloudflared/*.json` 凭据文件或复制页面上的 Token（以 `eyJh` 开头）。
+2. 打开 LocalShare 右上角 **⚙️ 设置**，切换为 **固定域名（多服务映射）** 模式。
+3. 填写 **主域名**（如 `example.com`）和 **Tunnel Token / 凭据内容（Credentials JSON）**，保存后 TunnelID 将自动识别。
+4. 开启多个端口的分享，每个端口将自动对应独立二级域名（如 `p5173.example.com`、`p3000.example.com`），无需在 Cloudflare 后台手动配置 Ingress 路由。
+5. 支持 VPN 环境；所有流量经由本地智能分流网关（`127.0.0.1:17890`）统一转发。
 
 ---
 
