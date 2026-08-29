@@ -91,3 +91,12 @@
 - [x] **Task 6.6: 隧道启动调用更新 (`useTunnel.js`)**
   - 校验逻辑更新：固定域名模式下，`credentialsJson`、`tunnelId`、`token` 三者有一即可，否则弹出设置弹窗。
   - `invoke('start_tunnel')` 调用新增 `customConfig` 参数透传。
+
+---
+
+## 阶段七：免安装绿色版 EXE 打包交付
+
+- [x] **Task 7.1: 维持原有无额外命令的 tauri:build 模式**
+  - 使用项目原有的 `pnpm run tauri:build`（`tauri build --no-bundle`）。
+- [x] **Task 7.2: 输出免安装单文件 EXE 产物**
+  - 成功生成独立免安装可执行程序 `LocalShare.exe`（约 8.2 MB），位于项目根目录，双击即可直接运行。
