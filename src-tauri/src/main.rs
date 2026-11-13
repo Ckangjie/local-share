@@ -12,7 +12,6 @@ fn main() {
         .plugin(tauri_plugin_shell::init())
         .manage(AppState::new())
         .invoke_handler(tauri::generate_handler![
-            commands::ports::scan_web_services,
             commands::engine::check_engine_status,
             commands::engine::download_engine,
             commands::tunnel::start_tunnel,

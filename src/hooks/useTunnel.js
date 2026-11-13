@@ -1,10 +1,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { copyToClipboard } from '@/utils/clipboard.js'
-import { useSettings } from '@/hooks/useSettings.js'
 
 export function useTunnel() {
-  const { settings, openSettings } = useSettings()
-
   // activeTunnels 结构: Record<number, { port, publicUrl, status: 'starting'|'running'|'stopping'|'error', runningSeconds, errorMessage, isCopied, timerId }>
   const activeTunnels = ref({})
 
@@ -105,20 +102,7 @@ export function useTunnel() {
       return
     }
 
-    // 2. 校验配置
-    const isCustomMode = settings.value?.mode === 'custom'
-    const customConfig = settings.value?.customConfig ?? {}
-    const token = isCustomMode ? (settings.value?.token?.trim() || customConfig.token?.trim() || '') : ''
-    const customDomain = isCustomMode ? (customConfig.baseDomain?.trim() || settings.value?.customDomain?.trim() || 'ccwu.cc') : ''
-    const credentialsJson = isCustomMode ? (customConfig.credentialsJson?.trim() || '') : ''
-    const tunnelId = isCustomMode ? (customConfig.tunnelId?.trim() || '') : ''
-
-    if (isCustomMode && !credentialsJson && !tunnelId && !token) {
-      openSettings()
-      throw new Error('当前为固定域名模式，请先在设置中填入 Tunnel 凭据 (Credentials JSON) 或 Token')
-    }
-
-    // 3. 初始化/重置该端口状态
+    // 2. 初始化/重置该端口状态
     activeTunnels.value[port] = {
       port,
       publicUrl: '',
@@ -134,20 +118,7 @@ export function useTunnel() {
 
       if (window.__TAURI_INTERNALS__ || window.__TAURI__) {
         const { invoke } = await import('@tauri-apps/api/core')
-        generatedUrl = await invoke('start_tunnel', {
-          port,
-          token: token || null,
-          customDomain: customDomain || null,
-          customConfig: isCustomMode
-            ? {
-                tunnel_id: tunnelId || null,
-                credentials_json: credentialsJson || null,
-                base_domain: customDomain || null,
-                subdomain_pattern: customConfig.subdomainPattern || 'p{port}',
-                token: token || null
-              }
-            : null
-        })
+        generatedUrl = await invoke('start_tunnel', { port })
       } else {
         throw new Error('未检测到桌面端运行环境')
       }
