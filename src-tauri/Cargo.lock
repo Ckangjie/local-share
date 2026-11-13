@@ -1858,7 +1858,6 @@ dependencies = [
  "tauri-plugin-shell",
  "tokio",
  "which",
- "windows-sys 0.59.0",
 ]
 
 [[package]]
